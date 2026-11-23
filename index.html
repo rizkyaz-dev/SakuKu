@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>SakuKu — Pencatatan Keuangan Harian</title>
+  <meta name="description" content="Aplikasi mobile web pencatatan keuangan harian, buku tabungan digital, dan wishlist dengan sinkronisasi Google Sheets dan dukungan offline.">
+  <meta name="theme-color" content="#0F766E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="SakuKu">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="apple-touch-icon" href="./icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top App Bar -->
+    <header class="top-bar">
+      <div class="brand-mark">
+        <span class="brand-logo" aria-hidden="true">S</span>
+        <h1 class="brand-title">SakuKu</h1>
+      </div>
+
+      <div class="month-picker" aria-label="Pilih Bulan">
+        <button type="button" class="month-btn" id="prevMonthBtn" aria-label="Bulan sebelumnya">‹</button>
+        <span class="month-label" id="monthLabel">Nov 2026</span>
+        <button type="button" class="month-btn" id="nextMonthBtn" aria-label="Bulan berikutnya">›</button>
+      </div>
+
+      <button type="button" class="sync-pill" id="syncPill" title="Pengaturan & Sinkronisasi Cloud">
+        <span class="sync-dot"></span>
+        <span id="syncPillText">Lokal</span>
+      </button>
+    </header>
+
+    <!-- Main Views -->
+    <main class="main-content">
+      <!-- View 1: Ringkasan -->
+      <section class="view active" id="view-home" aria-label="Ringkasan Keuangan">
+        <div id="homeContainer"></div>
+      </section>
+
+      <!-- View 2: Transaksi -->
+      <section class="view" id="view-transactions" aria-label="Daftar Transaksi">
+        <div class="search-box">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input type="search" id="txSearchInput" class="search-input" placeholder="Cari kategori, catatan, atau metode...">
+        </div>
+        <div class="chip-row" id="txFilterChips">
+          <button type="button" class="chip active" data-filter="all">Semua</button>
+          <button type="button" class="chip" data-filter="expense">Pengeluaran</button>
+          <button type="button" class="chip" data-filter="income">Pemasukan</button>
+        </div>
+        <div id="txListContainer"></div>
+      </section>
+
+      <!-- View 3: Analitik -->
+      <section class="view" id="view-analytics" aria-label="Analitik Keuangan">
+        <div class="stat-grid" id="analyticsStats"></div>
+
+        <div class="card">
+          <h2 class="chart-card-title">Proporsi Pengeluaran</h2>
+          <p class="chart-card-sub">Ketuk bagian diagram atau kategori untuk melihat detail</p>
+          <div id="donutChartBox"></div>
+        </div>
+
+        <div class="card">
+          <h2 class="chart-card-title">Arus Kas 6 Bulan Terakhir</h2>
+          <p class="chart-card-sub">Ketuk batang bulan untuk melihat ringkasan pemasukan & pengeluaran</p>
+          <div id="barChartBox"></div>
+        </div>
+      </section>
+
+      <!-- View 4: Tabungan -->
+      <section class="view" id="view-savings" aria-label="Buku Tabungan Digital">
+        <div id="savingsContainer"></div>
+      </section>
+
+      <!-- View 5: Wishlist -->
+      <section class="view" id="view-wishlist" aria-label="Daftar Wishlist">
+        <div class="chip-row" id="wishFilterChips">
+          <button type="button" class="chip active" data-filter="pending">Menunggu</button>
+          <button type="button" class="chip" data-filter="achieved">Tercapai</button>
+        </div>
+        <div id="wishlistContainer"></div>
+      </section>
+    </main>
+
+    <!-- Floating Action Button -->
+    <button type="button" class="fab" id="fabBtn" aria-label="Tambah Data Baru">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+
+    <!-- Bottom Navigation (M3 Expressive Floating Glass) -->
+    <nav class="bottom-nav" aria-label="Navigasi Utama">
+      <button type="button" class="nav-item active" data-tab="home">
+        <span class="nav-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5.5v-6.5h-5V21H4a1 1 0 0 1-1-1v-9.5z"/>
+          </svg>
+        </span>
+        <span>Ringkasan</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="transactions">
+        <span class="nav-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+            <circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>
+          </svg>
+        </span>
+        <span>Transaksi</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="analytics">
+        <span class="nav-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>
+          </svg>
+        </span>
+        <span>Analitik</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="savings">
+        <span class="nav-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+        </span>
+        <span>Tabungan</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="wishlist">
+        <span class="nav-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </span>
+        <span>Wishlist</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Bottom Sheet Modal -->
+  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true">
+    <div class="sheet" id="modalSheet"></div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="./charts.js"></script>
+  <script src="./sync.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
